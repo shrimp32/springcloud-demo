@@ -15,12 +15,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class HelloController {
     @Value("${server.port}")
     String port;
-
     @RequestMapping(value = "/hello" ,method = RequestMethod.GET)
     public String sayHello(@RequestParam String name) {
         String r = "Hello, " + name +"! port: " + port;
         return r;
     }
+
+    @Value("${app.name}")
+    String name;
+    @RequestMapping(value = "/hi")
+    public String hi(){
+        String r = "Hello, " + name +"! port: " + port;
+        return r;
+    }
+
 
     @RequestMapping(value = "/index" ,method = RequestMethod.GET)
     public String index(){
