@@ -1,18 +1,21 @@
+
+
 # Spring Cloud Demo 应用说明
+
 关键点：
 
 - 服务注册与发现
 - 服务消费与负载均衡：Spring Cloud可以用RestTemplate+Ribbon和Feign来调用服务，实现服务的负载均衡
 - 断路器
-- 智能路由
+- 网关和智能路由
 - 配置中心
 - 消息总线（Spring Cloud Bus）
 - 服务链路追踪（Spring Cloud Sleuth）
 - ​
 
-##  服务注册中心
+##  一、服务注册中心
 
-  ### 服务端配置eueka server:2000
+  ### 服务端配置eureka server:2000
    1. pom.xml
   ```xml
     <dependency>
@@ -38,13 +41,14 @@
            <artifactId>spring-cloud-starter-eureka</artifactId>
      </dependency>   
    ```
-      1. application.properties
+2. application.properties
+
 ```properties
     #配置eureka服务端的访问地址
     eureka.client.serviceUrl.defaultZone=http://localhost:2000/eureka/
 ```
 
-## cloud-config:3000 配置中心
+## 二、cloud-config:3000 配置中心
 
 在分布式系统中，由于服务数量巨多，为了方便服务配置文件统一管理，实时更新，所以需要分布式配置中心组件。分布式配置中心组件spring cloud config ，它支持配置服务放在配置服务的内存中（即本地），也支持放在远程Git仓库中。在spring cloud config 组件中，分两个角色，一是config server，二是config client。
 
@@ -106,7 +110,7 @@ eureka.client.serviceUrl.defaultZone=http://localhost:2000/eureka/
            </dependency>
    ```
 
-2. 在程序的配置文件bootstrap.properties文件配置以下
+2. 在程序的配置文件bootstrap.properties文件配置以下,注意配置文件名
 
 ```properties
 #访问配置服务器的配置
@@ -136,7 +140,9 @@ Hello,hello!port:2001
 
 
 
- ## service-ribbon:2010 服务消费者
+## 三、服务消费与负载均衡
+
+ ### service-ribbon:2010 服务消费者
 
 ribbon是一个负载均衡客户端。
 
@@ -196,7 +202,7 @@ Hello, xw! port: 2001
 Hello, xw! port: 2002
 ```
 
- ## service-feign:2020服务消费者
+ ### service-feign:2020服务消费者
 
 Feign是一个声明式的伪Http客户端，它使得写Http客户端变得更简单。使用Feign，只需要创建一个接口并注解。它具有可插拔的注解特性，可使用Feign 注解和JAX-RS注解。Feign支持可插拔的编码器和解码器。Feign默认集成了Ribbon，并和Eureka结合，默认实现了负载均衡的效果。
 
@@ -245,7 +251,7 @@ public class HelloController {
    ```
  ## 
 
-## 熔断器Netflix Hystrix
+## 四、熔断器Netflix Hystrix
 
 ### 在feigin使用断路器
 
@@ -322,13 +328,14 @@ public class SchedualServiceHelloHystric implements SchedualServiceHello {
            return "hi,"+name+",sorry,error!";
        }
    }
+   ```
 
 
    ```
 
 4. 启动service-ribbon，访问http://localhost:2010/hi?name=xw,浏览器显示
 
-```
+   ```
 Hello, xw! port: 2001
 ```
 
@@ -357,7 +364,7 @@ hi,xw,sorry,error!
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-hystrix-dashboard</artifactId>
    </dependency>
-   ```
+```
 
    ​
 
@@ -367,7 +374,7 @@ hi,xw,sorry,error!
 
 
 
-## zuul:1000 路由网关
+## 五、zuul:1000 路由网关
 
 Zuul的主要功能是路由转发和过滤器。路由功能是微服务的一部分，比如／api/user转发到到user服务，/api/shop转发到到shop服务。zuul默认和Ribbon结合实现了负载均衡的功能。
 
@@ -468,13 +475,13 @@ shouldFilter：这里可以写逻辑判断，是否要过滤，本文true,永远
 
 run：过滤器的具体逻辑。可用很复杂，包括查sql，nosql去判断该请求到底有没有权限访问。
 
-## Spring Cloud Bus消息总线
+## 六、Spring Cloud Bus消息总线
 
 Spring Cloud Bus 将分布式的节点用轻量的消息代理连接起来。它可以用于广播配置文件的更改或者服务之间的通讯，也可以用于监控。本文要讲述的是用Spring Cloud Bus实现通知微服务架构的配置文件的更改。
 
 
 
-## 服务链路追踪（Spring Cloud Sleuth）
+## 七、服务链路追踪（Spring Cloud Sleuth）
 
 Spring Cloud Sleuth 主要功能就是在分布式系统中提供追踪解决方案，并且兼容支持了 zipkin，你只需要在pom文件中引入相应的依赖即可。
 
@@ -534,3 +541,162 @@ spring.zipkin.base-url=http://localhost:4000
 3. 同理配置service-ribbon:2010 链路跟踪客户端、service-feigin:2020 链路跟踪客户端
 4. 互相调用时，访问http://localhost:4000,点击Dependencies,可以发现服务的依赖关系;点击find traces,可以看到具体服务相互调用的数据
 
+
+## 八、docker部署
+
+### 构建eureka server镜像
+
+1. pom.xml
+
+```xml
+<build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <!-- tag::plugin[] -->
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.4.3</version>
+                <configuration>
+                	<!-- 镜像名称 -->
+                    <imageName>${docker.image.prefix}/${project.artifactId}</imageName>
+                    <!-- Dockerfile 的位置 -->
+                    <dockerDirectory>src/main/docker</dockerDirectory>
+                    <!--resources是指那些需要和 Dockerfile 放在一起，在构建镜像时使用的文件，一般应用 jar 包需要纳入-->
+                    <resources>
+                        <resource>
+                            <targetPath>/</targetPath>
+                            <directory>${project.build.directory}</directory>
+                            <include>${project.build.finalName}.jar</include>
+                        </resource>
+                    </resources>
+                </configuration>
+            </plugin>
+            <!-- end::plugin[] -->
+        </plugins>
+    </build>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <docker.image.prefix>xw.cloud</docker.image.prefix>
+    </properties>
+```
+
+2. 修改配置文件
+
+   ```properties
+       spring.application.name=eureka
+       server.port=2000
+       eureka.instance.prefer-ip-address=true
+       
+       #server本身不作为客户端注册   
+       eureka.client.register-with-eureka=false
+       eureka.client.fetch-registry=false
+       eureka.client.serviceUrl.defaultZone=http://eureka:${server.port}/eureka/
+   ```
+
+   ​
+
+3. 编写Dockerfile文件，创建src/main/docker/Dockerfile文件
+
+```
+FROM frolvlad/alpine-oraclejdk8:slim
+VOLUME /tmp
+ADD eureka-0.0.1-SNAPSHOT.jar app.jar
+#RUN bash -c 'touch /app.jar'
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+EXPOSE 2000
+```
+
+3.  构建镜像
+
+```
+mvn clean
+mvn package docker:build
+```
+
+### 构建hello应用镜像
+
+1. pom.xml同上
+2. 修改配置文件，defaultZone发现服务的host改为镜像名
+
+```properties
+    spring.application.name=hello
+    server.port=2001
+        
+    #配置eureka服务端的访问地址
+    eureka.client.serviceUrl.defaultZone=http://eureka:2000/eureka/
+```
+
+3. dockefile 编写同上
+4. 构建镜像
+5. 运行docker镜像
+
+```
+docker run -p 2000: 2000 -t xw.cloud/eureka
+docker run -p 2001: 2001 -t xw.cloud/hello
+```
+
+ 访问localhost:2000
+
+### 采用docker-compose启动镜像
+
+采用docker-compose的方式编排镜像，启动镜像
+
+```
+version: '3'
+services:
+  eureka:
+    image: xw.cloud/eureka
+    restart: always
+    ports:
+      - 2000:2000
+
+  hello:
+    image: xw.cloud/service-hi
+    restart: always
+    ports:
+      - 2001:2001
+```
+
+输入命令： docker-compose up
+
+### 采用docker-compose编排并启动镜像
+
+现在以eureka-server为例： 
+将Dockerfile移到eureka-server的主目录，改写ADD的相对路径：
+
+```
+FROM frolvlad/alpine-oraclejdk8:slim
+VOLUME /tmp
+ADD ./target/eureka-0.0.1-SNAPSHOT.jar app.jar
+#RUN bash -c 'touch /app.jar'
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+EXPOSE 87611234567
+```
+
+同理修改service-hi目录；
+
+编写构建镜像docker-compose-dev.yml文件：
+
+```
+version: '3'
+services:
+  eureka-server:
+    build: eureka
+    ports:
+      - 2000:2000
+
+  service-hi:
+    build: hello
+    ports:
+      - 2001:2001
+```
+
+命令构建镜像并启动：
+
+```
+docker-compose -f docker-compose.yml -f docker-compose-dev.yml up 
+```
