@@ -1,17 +1,14 @@
-
-
 # Spring Cloud Demo 应用说明
-
 关键点：
 
-- 服务注册与发现
+- 服务注册与发现（eureka）
 - 服务消费与负载均衡：Spring Cloud可以用RestTemplate+Ribbon和Feign来调用服务，实现服务的负载均衡
-- 断路器
-- 网关和智能路由
-- 配置中心
+- 断路器（Netflix Hystrix）
+- 网关和智能路由（Zuul）
+- 配置中心（Spring Cloud Config）
 - 消息总线（Spring Cloud Bus）
 - 服务链路追踪（Spring Cloud Sleuth）
-- ​
+- Spring Cloud Stream 
 
 ##  一、服务注册中心
 
@@ -524,6 +521,8 @@ Spring Cloud Sleuth 主要功能就是在分布式系统中提供追踪解决方
 
 1. pom.xml引入spring-cloud-starter-zipkin依赖
 
+`spring-cloud-starter-zipkin`依赖内部包含了两个依赖，等于同时引入了`spring-cloud-starter-sleuth`，`spring-cloud-sleuth-zipkin`两个依赖。
+
 ```
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -536,13 +535,28 @@ Spring Cloud Sleuth 主要功能就是在分布式系统中提供追踪解决方
 ```properties
 #配置链路跟踪服务器地址
 spring.zipkin.base-url=http://localhost:4000
+sleuth.enabled=true
+#sleuth的采样率
+sleuth.sampler.percentage=1
 ```
 
-3. 同理配置service-ribbon:2010 链路跟踪客户端、service-feigin:2020 链路跟踪客户端
-4. 互相调用时，访问http://localhost:4000,点击Dependencies,可以发现服务的依赖关系;点击find traces,可以看到具体服务相互调用的数据
+3. 控制台输出类似[hello,d251f40af64361d2,e46132755dc395e1,true] 分别代表了[应用名称，traceId，spanId，当前调用是否被采集]。
+4. 同理配置service-ribbon:2010 链路跟踪客户端、service-feigin:2020 链路跟踪客户端
+5. 互相调用时，访问http://localhost:4000,点击Dependencies,可以发现服务的依赖关系;点击find traces,可以看到具体服务相互调用的数据
+
+## 八、Spring Cloud Stream
+
+Spring Cloud Stream本质上就是整合了Spring Boot和Spring Integration，实现了一套轻量级的消息驱动的微服务框架。通过使用Spring Cloud Stream，可以有效地简化开发人员对消息中间件的使用复杂度。
+
+目前为止Spring Cloud Stream只支持下面两个著名的消息中间件的自动化配置：
+
+- RabbitMQ
+
+- Kafka
 
 
-## 八、docker部署
+
+## 九、docker部署
 
 ### 构建eureka server镜像
 
@@ -604,7 +618,7 @@ spring.zipkin.base-url=http://localhost:4000
 ```
 FROM frolvlad/alpine-oraclejdk8:slim
 VOLUME /tmp
-ADD eureka-0.0.1-SNAPSHOT.jar app.jar
+ADD eureka-server-0.0.1-SNAPSHOT.jar app.jar
 #RUN bash -c 'touch /app.jar'
 ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
 EXPOSE 2000
@@ -613,8 +627,7 @@ EXPOSE 2000
 3.  构建镜像
 
 ```
-mvn clean
-mvn package docker:build
+mvn clean package docker:build
 ```
 
 ### 构建hello应用镜像
@@ -671,7 +684,7 @@ services:
 ```
 FROM frolvlad/alpine-oraclejdk8:slim
 VOLUME /tmp
-ADD ./target/eureka-0.0.1-SNAPSHOT.jar app.jar
+ADD ./target/eureka-server-0.0.1-SNAPSHOT.jar app.jar
 #RUN bash -c 'touch /app.jar'
 ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
 EXPOSE 87611234567
