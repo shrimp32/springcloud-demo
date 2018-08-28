@@ -306,10 +306,9 @@ public class SchedualServiceHelloHystric implements SchedualServiceHello {
 ```
 
 2. 启动类 加@EnableHystrix注解开启Hystrix
+3. 改造HelloService类，在`hiService`方法上加上`@HystrixCommand`注解，该注解对该方法创建了熔断器的功能，并指定了`fallbackMethod`熔断方法，熔断方法直接返回了一个字符串，字符串为`”hi,”+name+”,sorry,error!”`，代码如下：
 
-3. 改造HelloService类，在hiService方法上加上@HystrixCommand注解，该注解对该方法创建了熔断器的功能，并指定了fallbackMethod熔断方法，熔断方法直接返回了一个字符串，字符串为”hi,”+name+”,sorry,error!”，代码如下：
-
-   ```java
+```java
    @Service
    public class HelloService {
 
@@ -325,14 +324,11 @@ public class SchedualServiceHelloHystric implements SchedualServiceHello {
            return "hi,"+name+",sorry,error!";
        }
    }
-   ```
-
-
-   ```
+```
 
 4. 启动service-ribbon，访问http://localhost:2010/hi?name=xw,浏览器显示
 
-   ```
+```
 Hello, xw! port: 2001
 ```
 
@@ -344,32 +340,74 @@ hi,xw,sorry,error!
 
 6. 说明当hello服务不可用的时候，service-ribbon调用hello的API接口时，会执行快速失败，直接返回一组字符串，而不是等待响应超时，这很好的控制了容器的线程阻塞。
 
-##  Hystrix Dashboard熔断器仪表盘
+###  hystrix-dashboard:2800熔断器仪表盘
 
-基于service-ribbon、service-feigin改造
+可以基于service-ribbon、service-feigin改造，进行仪表盘的展示，也可以新建一个项目展示仪表盘。
+
+新建项目hystrix-dashboard，端口2800
 
 1. pom.xml
 
-   ```xml
-
+```xml
+   
    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
    </dependency>
-
+   
    <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-hystrix-dashboard</artifactId>
    </dependency>
 ```
 
-   ​
+2. 在主程序启动类中加入`@EnableHystrixDashboard`注解，开启hystrixDashboard
+3. 打开浏览器：访问`http://localhost:2800/hystrix`，输入`http://127.0.0.1:2010/hystrix.stream`，随便输入title，点击Monitor Stream按钮，会出现监控页面，反复刷新接口调用地址，会实时显示调用情况。
+4. 同理，如果要监控service-feign应用，输入`http://127.0.0.1:2020/hystrix.stream`，随便输入title，点击Monitor Stream按钮即可。
 
-2. 在主程序启动类中加入@EnableHystrixDashboard注解，开启hystrixDashboard
+### turbine:2810 聚合仪表盘
 
-3. 打开浏览器：访问http://localhost:2010/hystrix，输入http://127.0.0.1:2010/hystrix.stream，随便输入title，点击Monitor Stream按钮，会出现监控页面，反复刷新接口调用地址，会实时显示调用情况。
+在实际系统中，一个服务往往有多个实例，可以通过turbine进行聚合监控。
 
+新建项目turbine:2810
 
+1. pom.xml
+
+```xml
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+
+<dependency>
+   <groupId>org.springframework.cloud</groupId>
+   <artifactId>spring-cloud-starter-turbine</artifactId>
+</dependency>
+```
+
+2. 配置文件
+
+```properties
+server.port=2820
+spring.application.name=turbine
+
+#需要收集监控信息的服务名
+turbine.app-config=service-ribbon
+#集群名称为default，当我们服务数量非常多的时候，可以启动多个Turbine服务来构建不同的聚合集群，
+#而该参数可以用来区分这些不同的聚合集群，同时该参数值可以在Hystrix仪表盘中用来定位不同的聚合集群
+#只需要在Hystrix Stream的URL中通过cluster参数来指定；
+turbine.cluster-name-expression="default"
+#设置为true，可以让同一主机上的服务通过主机名与端口号的组合来进行区分，默认情况下会以host来区分不同的服务，这会使得在本地调试的时候，本机上的不同服务聚合成一个服务来统计。
+turbine.combine-host-port=true
+```
+
+3. 启动service-ribbon和hystrix-dashboard以及turbine，打开监控面板http://localhost:2800/hystrix，输入监控地址
+
+```
+http://localhost:2810/turbine.stream
+```
+
+点击监控即可查看。
 
 ## 五、zuul:1000 路由网关
 
@@ -427,17 +465,17 @@ public class MyFilter extends ZuulFilter {
     public String filterType() {
         return "pre";
     }
-
+    
     @Override
     public int filterOrder() {
         return 0;
     }
-
+    
     @Override
     public boolean shouldFilter() {
         return true;
     }
-
+    
     @Override
     public Object run() {
         RequestContext ctx = RequestContext.getCurrentContext();
@@ -451,7 +489,7 @@ public class MyFilter extends ZuulFilter {
             try {
                 ctx.getResponse().getWriter().write("token is empty");
             }catch (Exception e){}
-
+    
             return null;
         }
         log.info("ok");
@@ -486,7 +524,7 @@ Spring Cloud Sleuth 主要功能就是在分布式系统中提供追踪解决方
 
 1. 创建zipkin工程，pom.xml
 
-```
+```xml
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -502,12 +540,12 @@ Spring Cloud Sleuth 主要功能就是在分布式系统中提供追踪解决方
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
+    
         <dependency>
             <groupId>io.zipkin.java</groupId>
             <artifactId>zipkin-server</artifactId>
         </dependency>
-
+    
         <dependency>
             <groupId>io.zipkin.java</groupId>
             <artifactId>zipkin-autoconfigure-ui</artifactId>
@@ -548,15 +586,114 @@ sleuth.sampler.percentage=1
 
 Spring Cloud Stream本质上就是整合了Spring Boot和Spring Integration，实现了一套轻量级的消息驱动的微服务框架。通过使用Spring Cloud Stream，可以有效地简化开发人员对消息中间件的使用复杂度。
 
-目前为止Spring Cloud Stream只支持下面两个著名的消息中间件的自动化配置：
+### 应用模型
 
-- RabbitMQ
+- Middleware:一些消息中间件，如kafka、RabbitMQ
+- Binder：粘合剂，将Middleware和Stream应用粘合起来，不同Middleware对应不同的Binder。
+- Channel：通道，应用程序通过一个明确的Binder与外界（中间件）通信。
+- ApplicationCore：Stream自己实现的消息机制封装，包括分区、分组、发布订阅的语义，与具体中间件无关，这会让开发人员很容易地以相同的代码使用不同类型的中间件。
 
-- Kafka
+> Stream能自动发现并使用类路径中的binder,你也可以引入多个binders并选择使用哪一个，甚至可以在运行时根据不同的channels选择不同的binder实现。
 
+### 消费者分组
 
+每个消费者通过`spring.cloud.stream.bindings.<channelName>.group`指定一个组名称，`channelName`是代码中定义好的通道名称。
 
-## 九、docker部署
+消费者组订阅是持久的，如果你的应用指定了`group`，那即便你这个组下的所有应用实例都挂掉了，你的应用也会在重新启动后从未读取过的位置继续读取。但如果不指定`group`Stream将分配给一个匿名的、独立的只有一个成员的消费组，该组与所有其他组都处于一个发布－订阅关系中，还要注意的是匿名订阅不是持久的，意味着如果你的应用挂掉，那么在修复重启之前topics中错过的数据是不能被重新读取到的。所以为了水平扩展和持久订阅，建议最好指定一个消费者组。
+
+### 分区
+
+Stream提供了一个通用的抽象，用于统一方式进行分区处理，和具体使用的中间件无关，因此分区可以用于自带分区的代理（如kafka）或者不带分区的代理（如rabbiemq）。Stream支持在一个应用程序的多个实例之间数据分区，N个生产者的数据会发送给M个消费者，并保证共同的特性的数据由相同的消费者实例处理，这会提升你处理能力。
+
+Stream使用多实例进行分区数据处理是一个复杂设置，分区功能需要在生产者与消费者两端配置，SpringCloudDataFlow可以显著的简化过程，而且当你没有用SpringCloudDataFlow时，会给你的配置带来一些不便，需要你提前规划好，而不能再应用启动后动态追加。
+
+**下面是生产者有效的和典型的配置（Output Bindings）**
+
+```
+spring.cloud.stream.bindings.<channelName>.producer.partitionKeyExpression=payload.id
+spring.cloud.stream.bindings.<channelName>.producer.partitionCount=5
+```
+
+分区key的值是基于partitionKeyExpression计算得出的，用于每个消息被发送至对应分区的输出channel，partitionKeyExpression是spirng EL表达式用以提取分区键
+
+**下面是消费者有效的和典型的配置（Input Bindings）**
+
+```
+spring.cloud.stream.bindings.input.consumer.partitioned=true
+spring.cloud.stream.instanceIndex=3
+spring.cloud.stream.instanceCount=5
+```
+
+`instanceCount`表示应用实例的总数，`instanceIndex`在多个实例中必须唯一，并介于0~（`instanceCount`-1）之间。实例的索引可以帮助每个实例确定唯一的接收数据的分区，正确的设置这两个值十分重要，用来确保所有的数据被消费，以及应用实例接收相互排斥不重复消费。
+
+## 九、Spring Boot Admin监控中心
+
+SpringBootAdmin的Server端也可以注册在eureka这样的管理中心上，好处是可以监控所有注册在eureka上的服务，SpringBootAdmin客户端无需再配置服务端，注册到Eureka上后，SpringBootAdmin可以定时拉取服务注册列表，无需再为服务节点配置监控中心的地址。
+
+### admin server:5000
+
+1. 引入依赖
+
+   ```xml
+   <!--引入admin server依赖-->
+   <dependency>
+      <groupId>de.codecentric</groupId>
+      <artifactId>spring-boot-admin-server</artifactId>
+      <version>1.5.6</version>
+   </dependency>
+   <!--admin server的展示-->
+   <dependency>
+      <groupId>de.codecentric</groupId>
+      <artifactId>spring-boot-admin-server-ui</artifactId>
+      <version>1.5.6</version>
+   </dependency>
+   <!--作为注册到eureka的应用-->
+   <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-eureka</artifactId>
+   </dependency>
+   ```
+```
+
+2. 修改配置文件
+
+​```properties
+server.port=5000
+spring.application.name=admin
+
+#配置eureka服务端的访问地址
+eureka.client.serviceUrl.defaultZone=http://localhost:2000/eureka/
+```
+
+访问地址：http://localhost:5000
+
+### admin client
+
+修改hello应用，作为admin client
+
+1. 引入admin client的依赖包
+
+```xml
+<!--作为spring boot admin的客户端-->
+<dependency>
+   <groupId>de.codecentric</groupId>
+   <artifactId>spring-boot-admin-starter-client</artifactId>
+   <version>1.5.6</version>
+</dependency>
+```
+
+2. 修改配置文件
+
+```
+# 作为spring boot admin的客户端
+# 如果admin注册到了eureka上，可以自动获取所有eureka上的服务，进行监控，不用单独配置客户端
+# spring.boot.admin.url=http://localhost:5000
+
+# 默认的监控端点是 关闭的，设置为false后，才可访问
+management.security.enabled=false
+```
+
+##  十、docker部署
 
 ### 构建eureka server镜像
 

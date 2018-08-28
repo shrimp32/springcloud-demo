@@ -16,14 +16,14 @@ public class HelloController {
     @Value("${server.port}")
     String port;
 
+    @Value("${app.name}")
+    String name;
+
     @RequestMapping(value = "/hello" ,method = RequestMethod.GET)
     public String sayHello(@RequestParam String name) {
         String r = "Hello, " + name +"! port: " + port;
         return r;
     }
-
-    @Value("${app.name}")
-    String name;
 
     @RequestMapping(value = "/hi")
     public String hi(){
@@ -31,9 +31,10 @@ public class HelloController {
         return r;
     }
 
-
-    @RequestMapping(value = "/index" ,method = RequestMethod.GET)
+    @RequestMapping(value = "/" ,method = RequestMethod.GET)
     public String index(){
         return "Hello!";
     }
+
+
 }

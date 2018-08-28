@@ -17,7 +17,7 @@ public class HelloService {
     @HystrixCommand(fallbackMethod = "hiError")
     public String hiService(String name) {
         //这里是通过服务名来调用接口
-        return restTemplate.getForObject("http://hello/hello?name="+name,String.class);
+        return restTemplate.getForObject("http://service-hello/hello?name="+name,String.class);
     }
     public String hiError(String name) {
         return "hi,"+name+",sorry,error!";

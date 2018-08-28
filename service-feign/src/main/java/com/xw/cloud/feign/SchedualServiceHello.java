@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * Created by 夏玮
  * 2018/3/16 13:42
  */
-//@FeignClient(value = "hello")//hello为服务名
+//@FeignClient(value = "service-hello")//hello为服务名
 @FeignClient(value = "hello",fallback = SchedualServiceHelloHystric.class)//hello为服务名
 public interface SchedualServiceHello {
     @RequestMapping(value = "/hello",method = RequestMethod.GET)   //hello为接口名
