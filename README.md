@@ -75,13 +75,13 @@ spring.cloud.config.server.git.username=your username
 spring.cloud.config.server.git.password=your password
 ```
 
-4. 在远程仓库上创建hello应用的配置文件，hello-dev.properties如下：
+4. 在远程仓库上创建hello应用的配置文件，service-hello-dev.properties如下：
 
 ```
 app.name=hello
 app.version=1.0
 
-spring.application.name=hello
+spring.application.name=service-hello
 eureka.client.serviceUrl.defaultZone=http://localhost:2000/eureka/
 ```
 
@@ -171,7 +171,7 @@ public class HelloService {
 
     public String hiService(String name) {
         //这里是通过服务名来调用接口
-        return restTemplate.getForObject("http://hello/hello?name="+name,String.class);
+        return restTemplate.getForObject("http://service-hello/hello?name="+name,String.class);
     }
 }
 ```
@@ -225,7 +225,7 @@ Feign是一个声明式的伪Http客户端，它使得写Http客户端变得更�
    3. 定义一个feign接口,通过@ FeignClient（“服务名”），来指定调用哪个服务
 
       ```java
-      @FeignClient("hello")
+      @FeignClient("service-hello")
       public interface SchedualServiceHello {
           @RequestMapping(value = "/hello",method = RequestMethod.GET)
           String sayHiFromClientOne(@RequestParam(value = "name") String name);
@@ -262,7 +262,7 @@ feign.hystrix.enabled=true
 2. 在FeiginClient的SchedualServiceHello接口的注解中加上fallback的指定类就行了
 
 ```java
-@FeignClient(value = "hello",fallback = SchedualServiceHiHystric.class)
+@FeignClient(value = "service-hello",fallback = SchedualServiceHiHystric.class)
 public interface SchedualServiceHello {
     @RequestMapping(value = "/hello",method = RequestMethod.GET)
     String sayHiFromClientOne(@RequestParam(value = "name") String name);
@@ -409,7 +409,7 @@ http://localhost:2810/turbine.stream
 
 点击监控即可查看。
 
-## 五、zuul:1000 路由网关
+## 五、zuul:2100 路由网关
 
 Zuul的主要功能是路由转发和过滤器。路由功能是微服务的一部分，比如／api/user转发到到user服务，/api/shop转发到到shop服务。zuul默认和Ribbon结合实现了负载均衡的功能。
 
@@ -445,7 +445,7 @@ zuul.routes.api-b.path=/api-b/**
 zuul.routes.api-b.serviceId=service-feigin
 ```
 
-启动两个hello应用，端口号分别为2001和2002，反复访问http://localhost:1000/api-a/hi，交替显示
+启动两个hello应用，端口号分别为2001和2002，反复访问http://localhost:2100/api-a/hi，交替显示
 
 ```
 Hello, hello! port: 2001

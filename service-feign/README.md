@@ -1,5 +1,5 @@
-# service-ribbon：基于ribbon的服务消费者
-- port:2010
+# service-feign：基于feign的服务消费者
+- port:2020
 
 ## 服务调用者/消费者
 - /hi?name=
@@ -8,28 +8,43 @@
 ## eureka客户端
 ## admin 客户端
 ## 使用断路器
-1. pom.xml
+1. Feign是自带断路器的，在D版本的Spring Cloud中，它没有默认打开。需要在配置文件中配置打开它，在配置文件加以下代码：
 
-```xml
-<!--开启断路器-->
-<dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-hystrix</artifactId>
-</dependency>
+```properties
+#打开熔断配置
+feign.hystrix.enabled=true
 ```
 
-2. 启动类 加@EnableHystrix注解开启Hystrix
-3. 改造HelloService类，在hiService方法上加上@HystrixCommand注解，该注解对该方法创建了熔断器的功能，并指定了fallbackMethod熔断方法，熔断方法直接返回了一个字符串，字符串为”hi,”+name+”,sorry,error!
-4. 启动service-ribbon，访问http://localhost:2010/hi?name=xw,浏览器显示
+1. 在FeiginClient的SchedualServiceHello接口的注解中加上fallback的指定类就行了
 
-```
-Hello, xw! port: 2001
-```
-
-5. 关闭hello工程，再访问http://localhost:2010/hi?name=xw，浏览器显示
-
-```
-hi,xw,sorry,error!
+```java
+@FeignClient(value = "service-hello",fallback = SchedualServiceHiHystric.class)
+public interface SchedualServiceHello {
+    @RequestMapping(value = "/hello",method = RequestMethod.GET)
+    String sayHiFromClientOne(@RequestParam(value = "name") String name);
+}
 ```
 
-6. 说明当hello服务不可用的时候，service-ribbon调用hello的API接口时，会执行快速失败，直接返回一组字符串，而不是等待响应超时，这很好的控制了容器的线程阻塞。
+1. SchedualServiceHelloHystric需要实现SchedualServiceHello接口，并注入到IOC容器中
+
+```java
+@Component
+public class SchedualServiceHelloHystric implements SchedualServiceHello {
+    @Override
+    public String sayHiFromClientOne(String name) {
+        return "sorry， "+name;
+    }
+}
+```
+
+1. 启动四servcie-feign工程，浏览器打开<http://localhost:2020/hi?name=xw,注意此时hello工程没有启动，网页显示：
+
+   ```
+   sorry, xw
+   ```
+
+2. 启动hello工程，再次访问，浏览器显示：
+
+   ```
+   Hello, xw! port: 2001
+   ```

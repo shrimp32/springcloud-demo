@@ -21,8 +21,8 @@ public class HelloController {
         return schedualServiceHello.sayHiFromClientOne(name);
     }
 
-    @RequestMapping("/index")
+    @RequestMapping("/")
     public String index(){
-        return "index";
+        return "Please visit /hi?name=xw";
     }
 }

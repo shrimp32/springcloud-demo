@@ -6,6 +6,7 @@
 - /hello：被调用的服务，传入name参数，显示`Hello,传入的name!port:端口号`
 - /hi：显示`Hello，应用名！port：端口号`
 - /：显示`Hello`
+- /consumer:作为消费者调用自己的接口/hi
 
 ## eureka client
 ​​1. pom.xml
