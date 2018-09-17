@@ -56,12 +56,22 @@
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 
-		<!--作为spring boot admin的客户端-->
+		<!--作为spring boot admin的客户端，如果admin注册到了eureka上，则不需要 -->
 		<!--<dependency>-->
 			<!--<groupId>de.codecentric</groupId>-->
 			<!--<artifactId>spring-boot-admin-starter-client</artifactId>-->
 			<!--<version>1.5.6</version>-->
 		<!--</dependency>-->
+
+		<dependency>
+			<groupId>org.springframework.session</groupId>
+			<artifactId>spring-session-data-redis</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>

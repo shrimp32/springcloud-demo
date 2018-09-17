@@ -5,8 +5,9 @@
 ## 服务提供者
 - /hello：被调用的服务，传入name参数，显示`Hello,传入的name!port:端口号`
 - /hi：显示`Hello，应用名！port：端口号`
-- /：显示`Hello`
+- /：显示`Hello! sessionId is：d44a95cf-e8a7-4a60-b52b-04e16d247d8d`
 - /consumer:作为消费者调用自己的接口/hi
+- /logout:移除session中的sessionId
 
 ## eureka client
 ​​1. pom.xml
@@ -105,3 +106,20 @@ sleuth.sampler.percentage=1
 # 关闭权限，使得管理的各端点可访问
 management.security.enabled=false
 ```
+
+## spring session示例
+通过redis存储共享session
+
+1. `@EnableRedisHttpSession`
+2. pom.xml
+```xml
+        <dependency>
+			<groupId>org.springframework.session</groupId>
+			<artifactId>spring-session-data-redis</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+```
+3. application.properties中配置redis
