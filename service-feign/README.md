@@ -2,8 +2,7 @@
 - port:2020
 
 ## 服务调用者/消费者
-- /hi?name=
-- 调用hello服务的/hello接口
+- /hi?name=xw:调用hello服务的/hello接口
 
 ## eureka客户端
 ## admin 客户端
@@ -48,3 +47,6 @@ public class SchedualServiceHelloHystric implements SchedualServiceHello {
    ```
    Hello, xw! port: 2001
    ```
+## feign的自定义配置
+
+FeignClient的默认超时时间为10s，不会开启重试机制，需要自定义配置。

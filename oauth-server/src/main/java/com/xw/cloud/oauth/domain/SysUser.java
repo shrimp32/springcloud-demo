@@ -5,13 +5,23 @@ package com.xw.cloud.oauth.domain;
  * Created on 2018/9/10 14:07
  */
 
-public class User {
+public class SysUser {
     private String name;
     private String pwd;
     private Integer age;
     private Integer userId;
     private String dept;
     private String email;
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    private String role;
 
     public String getName() {
         return name;
@@ -27,10 +37,6 @@ public class User {
 
     public void setPwd(String pwd) {
         this.pwd = pwd;
-    }
-
-    public Integer getAge(int i) {
-        return age;
     }
 
     public void setAge(Integer age) {
@@ -52,6 +58,10 @@ public class User {
 
     public void setDept(String dept) {
         this.dept = dept;
+    }
+
+    public Integer getAge(Integer integer) {
+        return age;
     }
 
     public String getEmail() {

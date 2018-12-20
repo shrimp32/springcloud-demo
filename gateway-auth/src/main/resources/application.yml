@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: zuul
+server:
+  port: 2100
+
+# 配置eureka server地址
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:2000/eureka/
+
+# 安全配置
+security:
+  basic:
+    enabled: false
+  oauth2:
+    resource:
+      userInfoUri: http://localhost:2100/uaa/user
+      jwt:
+        keyValue: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkv3v+JF2MYIn+Cneujy6r8M+iiREaG10ZRi2Ubua92SMieq69rtH6mxR32Z1U4EqzMZSrfEfmIQBL9Qoym/eNCMIrRmGtrFER/Qb9NMiapibVPEVPiYrg6DTHEDc2I1KF44/ffJWtxIjsTl5YvydGx/QsoX+KJ3MH0Ee4hXZKYJKn26sboPEmYlfegox2XC8rQmKu/NgDl29+WrtbUY7L/U7ISZqo97hKk0OUxA8uGlPW/vGScyn2J6ZKqC8fGUS7XNus73cjz6meyecB/WhCpwDncH2KvhxtGI0/oJKckSqHvXVNw/X28T5izCVVdIp0ZYCALBO8mer5yaano+S2QIDAQAB
+      id: zuul
+      serviceId: ${PREFIX:}zuul
+      prefer-token-info: false
+    sso:
+      login-path: /login
+    client:
+      clientId: client
+      clientSecret: client
+      userAuthorizationUri: /uaa/oauth/authorize
+      accessTokenUri: http://localhost:2100/uaa/oauth/token  #网关地址
+
+
+################ 网关路由配置 ###############
+zuul:
+  routes:
+    oauthserver:
+#    默认敏感的头信息无法经网关进行传递，如下设置之后，就可以了
+      sensitiveHeaders:
+      path: /uaa/**
+      stripPrefix: false
+      serviceId: oauthserver
+#   当访问地址符合/api-b/**时，被自动定位到service-feign服务上去
+    api-a:
+      path: /api-a/**
+      serviceId: service-hello
+    api-b:
+      path: /api-b/**
+      serviceId: service-feigin
+#   简化的写法，与上面功能相同
+    serivice-riibon: /api-c/**
+# 不暴露被代理的服务地址
+  add-proxy-headers: true
+  host:
+    connect-timeout-millis: 10000
+    socket-timeout-millis: 60000
+# 忽略service-hello服务，不为其提供路由
+  ignored-services: service-hello
+# 不给接口/hello路由
+  ignored-patterns: /**/hello/**
+# 为路由增加统一的前缀
+  prefix: /api

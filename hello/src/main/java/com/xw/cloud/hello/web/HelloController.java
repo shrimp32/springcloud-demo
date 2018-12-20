@@ -1,10 +1,7 @@
 package com.xw.cloud.hello.web;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
 
@@ -34,10 +31,10 @@ public class HelloController {
     }
 
     @RequestMapping(value = "/" ,method = RequestMethod.GET)
-    public String index(HttpSession session){
+    public String index(HttpSession session,@Value("${spring.application.name}") String name){
         String sessionId = (String)session.getAttribute("sessionId");
         if (null==sessionId) session.setAttribute("sessionId",session.getId());
-        return "Hello! sessionId is："+session.getId();
+        return "Welcome to "+name+"! sessionId is："+session.getId();
     }
 
     @RequestMapping(value = "/logout" ,method = RequestMethod.GET)
@@ -46,4 +43,39 @@ public class HelloController {
         return "Hello! sessionId is："+session.getAttribute("sessionId");
     }
 
+
+    @GetMapping("/test1")
+    public String test1() {
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "test1";
+    }
+
+    @GetMapping("/test2")
+    public String test2() {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "test2";
+    }
+
+    @GetMapping("/test3")
+    public String test3() {
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "test3";
+    }
+    @GetMapping("/test4")
+    public String test4() {
+        int num = 199/0;
+        return String.valueOf(num);
+    }
 }

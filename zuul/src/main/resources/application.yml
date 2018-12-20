@@ -1,41 +1,75 @@
-#spring:
-#  application:
-#    name: zuul
-#server:
-#  port: 2100
-#
-## 配置eureka server地址
-#eureka:
-#  client:
-#    serviceUrl:
-#      defaultZone: http://localhost:2000/eureka/
+spring:
+  application:
+    name: zuul
+server:
+  port: 2100
 
-#
-#security:
-#  oauth2:
-#    resource:
-#      logout:
-#        url: http://localhost:2100/revoke-token
-#      loadBalanced: true
-#      userInfoUri: http://localhost:2100/me
-#      jwt:
-#        keyValue: -----BEGIN PUBLIC KEY-----MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoZQfHaHQEzGuWBESlrcoM9DMiVM/fHEjLG7VK3COZ1xuM49P4pC+pNY3nm+wL/WM8QQdYNjPetzCiltLdW60rQa/+osW599SkmUSGF7rYXI9y4n1N4h0k9jLBdZ9n2/5miWWPDwrbsIGgLXp/NIsH4T2Gj6lUZuMj4cskIjU8P12S5TJEQ3N+PGYBY+G8zWzYB1dr3LssqATOqv1/XH+kPEesAtaaxJsfa/SWpaxDZnM5JGSjQ1/FEjyF2e0yAKbV/NqHnIqqnucr/StFBn/sGloEs1DAj8nIMtoiklqejqJvjCSdOC75f2N3iK72DgAVZkSNtfEdsVygHiOOtBtWQIDAQAB-----END\
-#          \ PUBLIC KEY-----
-#      id: zuul
-#      serviceId: ${PREFIX:}zuul
-#    client:
-#      clientId: app_client_zuul
-#      userAuthorizationUri: http://localhost:2100/oauth/authorize
-#      accessTokenUri: http://localhost:2100/oauth/token
-#      clientSecret: app_client_zuul_secret
+#管理端点不需要授权就能访问
+management:
+  security:
+    enabled: false
 
+# 配置eureka server地址
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:2000/eureka/
 
-# 网关路由配置
-#zuul:
-#  routes:
-#    api-b:
-#      path: /api-b/**
-#      serviceId: service-feigin
-#    api-a:
-#      path: /api-a/**
-#      serviceId: service-ribbon
+################ 网关路由配置 ###############
+zuul:
+  routes:
+    oauthserver:
+#    默认敏感的头信息无法经网关进行传递，如下设置之后，就可以了
+      sensitiveHeaders:
+      path: /uaa/**
+      stripPrefix: false
+      serviceId: oauthserver
+#   当访问地址符合/api-b/**时，被自动定位到service-feign服务上去
+    api-a:
+      path: /api-a/**
+      serviceId: service-hello
+#      开启该路由的重试
+      retryable: true
+    api-b:
+      path: /api-b/**
+      serviceId: service-feign
+#   简化的写法，与上面作用一样
+    service-ribbon: /api-c/**
+# 不暴露被代理的服务地址
+  add-proxy-headers: true
+# 忽略service-hello服务，不为其提供路由
+  ignored-services: config-server
+# 不给接口/hello路由
+  ignored-patterns: /**/hello/**
+# 为路由增加统一的前缀
+  prefix: /
+# 配置Zuul的Hystrix线程池,让每个路由使用独立的线程池
+  thread-pool:
+    use-separate-thread-pools: true
+# zuul超时配置，针对url方式有效
+  host:
+    connect-timeout-millis: 2000
+    socket-timeout-millis: 10000
+    max-total-connections: 200
+    max-per-route-connections: 20
+  retryable: false
+# zuul的超时配置，针对Ribbon、Hystrix相关
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+          enable: true
+        isolation:
+          thread:
+            timeoutInMilliseconds: 15000
+
+ribbon:
+  ReadTimeout: 1000
+  ConnectTimeout: 1000
+  MaxAutoRetries: 1
+  MaxAutoRetriesNextServer: 2
+  eureka:
+    enabled: true

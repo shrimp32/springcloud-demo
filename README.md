@@ -342,7 +342,7 @@ hi,xw,sorry,error!
 
 ###  hystrix-dashboard:2800熔断器仪表盘
 
-可以基于service-ribbon、service-feigin改造，进行仪表盘的展示，也可以新建一个项目展示仪表盘。
+可以基于service-ribbon、service-feign改造，进行仪表盘的展示，也可以新建一个项目展示仪表盘。
 
 新建项目hystrix-dashboard，端口2800
 
@@ -383,6 +383,12 @@ hi,xw,sorry,error!
    <groupId>org.springframework.cloud</groupId>
    <artifactId>spring-cloud-starter-turbine</artifactId>
 </dependency>
+
+<dependency>
+	<groupId>org.springframework.cloud</groupId>
+	<artifactId>spring-cloud-netflix-turbine</artifactId>
+</dependency>
+
 ```
 
 2. 配置文件
@@ -392,7 +398,7 @@ server.port=2820
 spring.application.name=turbine
 
 #需要收集监控信息的服务名
-turbine.app-config=service-ribbon
+turbine.app-config=service-ribbon,service-feign
 #集群名称为default，当我们服务数量非常多的时候，可以启动多个Turbine服务来构建不同的聚合集群，
 #而该参数可以用来区分这些不同的聚合集群，同时该参数值可以在Hystrix仪表盘中用来定位不同的聚合集群
 #只需要在Hystrix Stream的URL中通过cluster参数来指定；
@@ -401,13 +407,13 @@ turbine.cluster-name-expression="default"
 turbine.combine-host-port=true
 ```
 
-3. 启动service-ribbon和hystrix-dashboard以及turbine，打开监控面板http://localhost:2800/hystrix，输入监控地址
+3. 启动service-ribbon和hystrix-dashboard以及turbine，打开监控面板http://localhost:2800/hystrix，输入监控地址。
 
 ```
 http://localhost:2810/turbine.stream
 ```
 
-点击监控即可查看。
+点击监控即可查看，可以看到多组服务的监控情况。
 
 ## 五、zuul:2100 路由网关
 
@@ -573,9 +579,9 @@ Spring Cloud Sleuth 主要功能就是在分布式系统中提供追踪解决方
 ```properties
 #配置链路跟踪服务器地址
 spring.zipkin.base-url=http://localhost:4000
-sleuth.enabled=true
+spring.sleuth.enabled=true
 #sleuth的采样率
-sleuth.sampler.percentage=1
+spring.sleuth.sampler.percentage=1
 ```
 
 3. 控制台输出类似[hello,d251f40af64361d2,e46132755dc395e1,true] 分别代表了[应用名称，traceId，spanId，当前调用是否被采集]。
@@ -693,7 +699,17 @@ eureka.client.serviceUrl.defaultZone=http://localhost:2000/eureka/
 management.security.enabled=false
 ```
 
-##  十、docker部署
+##  十、微服务的认证授权
+
+zuul+oauth2 server解决方案
+
+
+
+### oauth server：2600
+
+
+
+##  十一、docker部署
 
 ### 构建eureka server镜像
 

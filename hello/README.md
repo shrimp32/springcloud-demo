@@ -5,8 +5,8 @@
 ## 服务提供者
 - /hello：被调用的服务，传入name参数，显示`Hello,传入的name!port:端口号`
 - /hi：显示`Hello，应用名！port：端口号`
-- /：显示`Hello! sessionId is：d44a95cf-e8a7-4a60-b52b-04e16d247d8d`
 - /consumer:作为消费者调用自己的接口/hi
+- /：显示`Hello! sessionId is：d44a95cf-e8a7-4a60-b52b-04e16d247d8d`
 - /logout:移除session中的sessionId
 
 ## eureka client
@@ -108,7 +108,9 @@ management.security.enabled=false
 ```
 
 ## spring session示例
-通过redis存储共享session
+通过redis存储共享session：启动2个示例，端口分别为2001和2002。
+- 访问`http://localhost:2001/`和`http://localhost:2002`,显示的sessionId相同。
+- 访问`/logout`
 
 1. `@EnableRedisHttpSession`
 2. pom.xml

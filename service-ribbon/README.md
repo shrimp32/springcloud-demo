@@ -2,8 +2,8 @@
 - port:2010
 
 ## 服务调用者/消费者
-- /hi?name=
-- 调用hello服务的/hello接口
+- `/hi?name=` 调用hello服务的/hello接口
+- `/` 默认说明
 
 ## eureka客户端
 ## admin 客户端
