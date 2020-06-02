@@ -1,0 +1,34 @@
+server:
+  port: 2040
+spring:
+  application:
+    name: grpc-demo-consumer
+
+  #consul的配置
+  consul:
+    host: localhost
+    port: 8500
+
+grpc:
+  client:
+    grpc-demo-provider:
+#      enableKeepAlive: true
+#      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+
+# actuator management
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+# actuator info
+info:
+  app:
+    encoding:UTF-8
+    java.source:1.8
+    java.traget:1.8
+    name:grpc-demo-consumer

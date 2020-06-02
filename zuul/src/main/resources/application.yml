@@ -1,61 +1,89 @@
 spring:
   application:
     name: zuul
+  cloud:
+ #####服务发现consul配置#### 
+    consul:
+      discovery:
+        hostname: localhost
+        port: 8500
+      
 server:
   port: 2100
-
-#管理端点不需要授权就能访问
+  
+#打开所有监控端点  
 management:
-  security:
-    enabled: false
+  endpoints:
+    web:
+      exposure:
+        include:
+        - '*'
+  endpoint:
+    health:
+      show-details: always    
+#eureka:
+#  instance:
+#    hostname: localhost
+#  client:
+#    serviceUrl:
+#      defaultZone: http://localhost:2000/eureka/
 
-# 配置eureka server地址
-eureka:
-  instance:
-    hostname: localhost
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:2000/eureka/
-
-################ 网关路由配置 ###############
 zuul:
   routes:
     oauthserver:
-#    默认敏感的头信息无法经网关进行传递，如下设置之后，就可以了
-      sensitiveHeaders:
+      sensitiveHeaders: null
       path: /uaa/**
       stripPrefix: false
       serviceId: oauthserver
-#   当访问地址符合/api-b/**时，被自动定位到service-feign服务上去
-    api-a:
+    api-a: # 该配置方式中，user-route只是给路由一个名称，可以任意起名。
       path: /api-a/**
       serviceId: service-hello
-#      开启该路由的重试
       retryable: true
     api-b:
       path: /api-b/**
       serviceId: service-feign
-#   简化的写法，与上面作用一样
-    service-ribbon: /api-c/**
-# 不暴露被代理的服务地址
+    service-ribbon: /api-c/** #service-ribbon微服务会被映射到/api-c/**路径
   add-proxy-headers: true
-# 忽略service-hello服务，不为其提供路由
-  ignored-services: config-server
-# 不给接口/hello路由
+  ignored-services: config-server #配置需要忽略的服务，多个用逗号分隔
   ignored-patterns: /**/hello/**
-# 为路由增加统一的前缀
   prefix: /
-# 配置Zuul的Hystrix线程池,让每个路由使用独立的线程池
   thread-pool:
     use-separate-thread-pools: true
-# zuul超时配置，针对url方式有效
   host:
-    connect-timeout-millis: 2000
+    connect-timeout-millis: 2000 #如果您通过指定URL配置了Zuul路由,则需这里配置
     socket-timeout-millis: 10000
     max-total-connections: 200
     max-per-route-connections: 20
   retryable: false
-# zuul的超时配置，针对Ribbon、Hystrix相关
+ 
+ # 限流
+  ratelimit:
+    key-prefix: api-a  #对应用来标识请求的key的前缀
+    enabled: true
+    repository: REDIS  #对应存储类型（用来存储统计信息）
+    behind-proxy: true  #代理之后
+    
+    default-policy: #可选 - 针对所有的路由配置的策略，除非特别配置了policies
+      limit: 10 #可选 - 每个刷新时间窗口对应的请求数量限制
+      quota: 1000 #可选-  每个刷新时间窗口对应的请求时间限制（秒）
+      refresh-interval: 60 # 刷新时间窗口的时间，默认值 (秒)
+#      type: #可选 限流方式
+#        - user
+#        - origin
+#        - url
+    policies:
+      service-hello:  #特定的路由
+        limit: 10 #可选- 每个刷新时间窗口对应的请求数量限制
+        quota: 1000 #可选-  每个刷新时间窗口对应的请求时间限制（秒）
+        refresh-interval: 60 # 刷新时间窗口的时间，默认值 (秒)
+        type: #可选 限流方式
+          - type: user #基于用户的限流，某用户每分钟只能访问10次
+            matcher: user
+          - type: origin #基于访问源的限流，某个ip每分钟只能访问10次
+            matcher: localhost
+          - type: url #基于url的限流，某个url每分钟只能访问10次
+            matcher: /hello
+            
 hystrix:
   command:
     default:
@@ -65,9 +93,8 @@ hystrix:
         isolation:
           thread:
             timeoutInMilliseconds: 15000
-
 ribbon:
-  ReadTimeout: 1000
+  ReadTimeout: 1000 #如果Zuul使用服务发现，则需要使用ribbon.ReadTimeout和ribbon.SocketTimeout功能区属性配置这些超时
   ConnectTimeout: 1000
   MaxAutoRetries: 1
   MaxAutoRetriesNextServer: 2

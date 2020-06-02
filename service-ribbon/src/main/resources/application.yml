@@ -4,7 +4,18 @@ spring:
     loadbalancer:
       retry:
         enabled: true
-
+     
+management:
+# 打开hystrix的监控端点
+  endpoints:
+    web:
+      exposure:
+        include:
+#        - '*'
+        - 'health'
+        - 'hystrix.stream'
+#        include: 'hystrix.stream'
+     
 # ribbon的重试配置
 ribbon:
 # 同一实例最大重试次数，不包括首次调用

@@ -50,9 +50,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
          * 内存验证
          */
         auth.inMemoryAuthentication()
-                .withUser("admin").password("admin").roles("role_admin")
+                .withUser("admin").password(passwordEncoder().encode("admin")).roles("role_admin")
                 .and()
-                .withUser("user").password("user").roles("role_user");
+                .withUser("user").password(passwordEncoder().encode("user")).roles("role_user");
         /**
          * LDAP验证
          * 基于JDBC验证

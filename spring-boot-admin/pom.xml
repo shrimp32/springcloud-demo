@@ -14,17 +14,18 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.5.13.RELEASE</version>
-		<relativePath/>
+		<version>2.2.1.RELEASE</version>
+		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
-		<spring-cloud.version>Edgware.SR2</spring-cloud.version>
+<!--		<spring-cloud.version>Greenwich.RELEASE</spring-cloud.version>-->
+		<spring-cloud.version>Hoxton.RELEASE</spring-cloud.version>
+		<docker.image.prefix>xw.cloud</docker.image.prefix>
 	</properties>
-
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -38,24 +39,26 @@
 	</dependencyManagement>
 	<dependencies>
 		<!--引入admin server依赖-->
+		<!--F版本-->
 		<dependency>
 			<groupId>de.codecentric</groupId>
-			<artifactId>spring-boot-admin-server</artifactId>
-			<version>1.5.6</version>
+			<artifactId>spring-boot-admin-starter-server</artifactId>
+			<version>2.1.4</version>
 		</dependency>
-		<!--admin server的展示-->
 		<dependency>
 			<groupId>de.codecentric</groupId>
-			<artifactId>spring-boot-admin-server-ui</artifactId>
-			<version>1.5.6</version>
+			<artifactId>spring-boot-admin-starter-client</artifactId>
+			<version>2.1.4</version>
 		</dependency>
-        <!--admin server权限控制-->
-        <!--<dependency>-->
-            <!--<groupId>de.codecentric</groupId>-->
-            <!--<artifactId>spring-boot-admin-server-ui-login</artifactId>-->
-			<!--<version>1.5.6</version>-->
-        <!--</dependency>-->
-
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<!--用于安全管理-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
 		<!--配置邮件，以实现邮件告警-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -65,8 +68,14 @@
         <!--作为注册到eureka的应用-->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-eureka</artifactId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 		</dependency>
+		
+		<!--consul作为服务发现-->
+<!--         <dependency>-->
+<!--            <groupId>org.springframework.cloud</groupId>-->
+<!--            <artifactId>spring-cloud-starter-consul-discovery</artifactId>-->
+<!--        </dependency>-->
 	</dependencies>
 
 	<build>

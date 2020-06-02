@@ -1,0 +1,20 @@
+spring:
+  profiles: secure
+  security:
+    user:
+      name: admin
+      password: admin
+      roles: ACTUATOR_ADMIN #拥有角色，用于允许自身访问
+  boot:
+    admin:
+      client:
+        url: http://localhost:5000/ #spring admin server访问地址
+        username: admin #spring admin server用户名
+        password: admin #spring admin server密码
+        instance:
+          metadata:
+            user.name: ${spring.security.user.name} #客户端元数据访问用户
+            user.password: ${spring.security.user.password} #客户端元数据访问密码
+            user.roles: ACTUATOR_ADMIN
+          prefer-ip: true
+---

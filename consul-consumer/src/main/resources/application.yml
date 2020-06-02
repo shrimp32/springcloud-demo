@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: consul-consumer
+  cloud:
+    consul:
+      port: 8500
+      host: localhost
+
+server:
+  port: 8082
+
+management:
+  endpoint:
+    chaosmonkey:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info,chaosmonkey
+
+# 混沌测试的配置
+chaos:
+  monkey:
+    enabled: true
+    watcher:
+      controller: true
+      rest-controller: true
+      repository: true
+    assaults:
+      exceptions-active: true
+      level: 8
+      kill-application-active: true
+      latency-range-start: 1000
+      latency-range-end: 10000
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+  hystrix:
+    enabled: false

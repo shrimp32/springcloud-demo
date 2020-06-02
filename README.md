@@ -1,14 +1,33 @@
 # Spring Cloud Demo 应用说明
 关键点：
 
-- 服务注册与发现（eureka）
-- 服务消费与负载均衡：Spring Cloud可以用RestTemplate+Ribbon和Feign来调用服务，实现服务的负载均衡
-- 断路器（Netflix Hystrix）
-- 网关和智能路由（Zuul）
-- 配置中心（Spring Cloud Config）
+1. 服务注册与发现（eureka）
+2. 进程间通信
+   - http：Restful
+   - RPC：Thrift、GRPC
+3. 负载均衡
+   - 客户端负载均衡：Ribbon
+   - 服务端负载均衡：Ngnix、HA Proxy
+4. 分布式配置中心（Spring Cloud Config）
+5. 熔断器（Netflix Hystrix）
+6. 网关路由（Zuul）
+
+其他
+
 - 消息总线（Spring Cloud Bus）
 - 服务链路追踪（Spring Cloud Sleuth）
+- Spring Boot Admin
 - Spring Cloud Stream 
+
+启动顺序：
+
+- 服务管理类：eureka、cloud-config
+- 监控类：hystirx-dashboard、turbin、spring-boot-admin、zipkin
+- zuul、service-hello、service-sample
+- service-ribbon、service-feign
+- stream-kafka、stream-rabbitmq
+
+
 
 ##  一、服务注册中心
 
@@ -30,7 +49,7 @@
     eureka.client.fetch-registry=false
     eureka.client.serviceUrl.defaultZone=http://localhost:${server.port}/eureka/
    ```
-  ### 客户端配置 hello:2001示例应用
+  ### 客户端配置 service-hello:2001示例应用
    1. pom.xml
    ```xml
      <dependency>
@@ -75,10 +94,10 @@ spring.cloud.config.server.git.username=your username
 spring.cloud.config.server.git.password=your password
 ```
 
-4. 在远程仓库上创建hello应用的配置文件，service-hello-dev.properties如下：
+4. 在远程仓库上创建service-hello应用的配置文件，service-hello-dev.properties如下：
 
 ```
-app.name=hello
+app.name=service-hello
 app.version=1.0
 
 spring.application.name=service-hello
@@ -96,7 +115,7 @@ eureka.client.serviceUrl.defaultZone=http://localhost:2000/eureka/
 
 ### config client
 
-将hello改造为config client。
+将service-hello改造为config client。
 
 1. pom.xml中加入
 
@@ -132,7 +151,7 @@ spring.cloud.config.uri= http://localhost:3000/
 4. 访问http://localhost:2001/hi，显示
 
 ```
-Hello,hello!port:2001
+Hello,service-hello!port:2001
 ```
 
 
@@ -161,7 +180,7 @@ ribbon是一个负载均衡客户端。
 ```
 
 2. 在工程的启动类中,通过@EnableDiscoveryClient向服务中心注册；并且向程序的ioc注入一个bean: restTemplate;并通过@LoadBalanced注解表明这个restRemplate开启负载均衡的功能。
-3. 写一个测试类HelloService，通过之前注入ioc容器的restTemplate来消费hello服务的“/hello”接口，在这里我们直接用的程序名替代了具体的url地址，在ribbon中它会根据服务名来选择具体的服务实例，根据服务实例在请求的时候会用具体的url替换掉服务名，代码如下
+3. 写一个测试类HelloService，通过之前注入ioc容器的restTemplate来消费service-hello服务的“/hello”接口，在这里我们直接用的程序名替代了具体的url地址，在ribbon中它会根据服务名来选择具体的服务实例，根据服务实例在请求的时候会用具体的url替换掉服务名，代码如下
 
 ```java
 @Service
@@ -201,7 +220,11 @@ Hello, xw! port: 2002
 
  ### service-feign:2020服务消费者
 
-Feign是一个声明式的伪Http客户端，它使得写Http客户端变得更简单。使用Feign，只需要创建一个接口并注解。它具有可插拔的注解特性，可使用Feign 注解和JAX-RS注解。Feign支持可插拔的编码器和解码器。Feign默认集成了Ribbon，并和Eureka结合，默认实现了负载均衡的效果。
+Feign是Netflix开发的声明式、模板化的HTTP客户端，其灵感来自Retrofit、JAXRS-2.0以及WebSocket。
+
+Feign可帮助我们更加便捷、优雅地调用HTTP API。使用Feign，只需要创建一个接口并注解。它具有可插拔的注解特性，可使用Feign 注解和JAX-RS注解。
+
+Feign支持可插拔的编码器和解码器。Feign默认集成了Ribbon，并和Eureka结合，默认实现了负载均衡的效果。
 
    1. pom.xml引入Feign的起步依赖spring-cloud-starter-feign、Eureka的起步依赖spring-cloud-starter-eureka、Web的起步依赖spring-boot-starter-web
 
@@ -250,6 +273,15 @@ public class HelloController {
 
 ## 四、熔断器Netflix Hystrix
 
+在分布式架构中，当某个服务单元发生故障（类似用电器发生短路）之后，通过断路器的故障监控（类似熔断保险丝），向调用方返回一个错误响应，而不是长时间的等待。这样就不会使得线程因调用故障服务被长时间占用不释放，避免了故障在分布式系统中的蔓延。 
+
+### 工作流程
+
+1.检查缓存 
+2.检查circuit breaker状态 
+3.执行相应指令 
+4.记录数据，计算失败比率 
+
 ### 在feigin使用断路器
 
 1. Feign是自带断路器的，在D版本的Spring Cloud中，它没有默认打开。需要在配置文件中配置打开它，在配置文件加以下代码：
@@ -281,13 +313,13 @@ public class SchedualServiceHelloHystric implements SchedualServiceHello {
 }
 ```
 
-4. 启动四servcie-feign工程，浏览器打开<http://localhost:2020/hi?name=xw,注意此时hello工程没有启动，网页显示：
+4. 启动四servcie-feign工程，浏览器打开<http://localhost:2020/hi?name=xw,注意此时service-hello工程没有启动，网页显示：
 
    ```
    sorry, xw
    ```
 
-5. 启动hello工程，再次访问，浏览器显示：
+5. 启动service-hello工程，再次访问，浏览器显示：
 
    ```
    Hello, xw! port: 2001
@@ -332,13 +364,13 @@ public class SchedualServiceHelloHystric implements SchedualServiceHello {
 Hello, xw! port: 2001
 ```
 
-5. 关闭hello工程，再访问http://localhost:2010/hi?name=xw，浏览器显示
+5. 关闭service-hello工程，再访问http://localhost:2010/hi?name=xw，浏览器显示
 
 ```
 hi,xw,sorry,error!
 ```
 
-6. 说明当hello服务不可用的时候，service-ribbon调用hello的API接口时，会执行快速失败，直接返回一组字符串，而不是等待响应超时，这很好的控制了容器的线程阻塞。
+6. 说明当service-hello服务不可用的时候，service-ribbon调用hello的API接口时，会执行快速失败，直接返回一组字符串，而不是等待响应超时，这很好的控制了容器的线程阻塞。
 
 ###  hystrix-dashboard:2800熔断器仪表盘
 
@@ -451,11 +483,11 @@ zuul.routes.api-b.path=/api-b/**
 zuul.routes.api-b.serviceId=service-feigin
 ```
 
-启动两个hello应用，端口号分别为2001和2002，反复访问http://localhost:2100/api-a/hi，交替显示
+启动两个service-hello应用，端口号分别为2001和2002，反复访问http://localhost:2100/api-a/hi，交替显示
 
 ```
-Hello, hello! port: 2001
-Hello, hello! port: 2002
+Hello, service-hello! port: 2001
+Hello, service-hello! port: 2002
 ```
 
 ### 服务过滤
@@ -561,7 +593,7 @@ Spring Cloud Sleuth 主要功能就是在分布式系统中提供追踪解决方
 2. 在其程序入口类, 加上注解@EnableZipkinServer，开启ZipkinServer的功能
 
 
-### hello:2001 链路跟踪客户端
+### service-hello:2001 链路跟踪客户端
 
 1. pom.xml引入spring-cloud-starter-zipkin依赖
 
@@ -675,7 +707,7 @@ eureka.client.serviceUrl.defaultZone=http://localhost:2000/eureka/
 
 ### admin client
 
-修改hello应用，作为admin client
+修改service-hello应用，作为admin client
 
 1. 引入admin client的依赖包
 
@@ -783,13 +815,13 @@ EXPOSE 2000
 mvn clean package docker:build
 ```
 
-### 构建hello应用镜像
+### 构建service-hello应用镜像
 
 1. pom.xml同上
 2. 修改配置文件，defaultZone发现服务的host改为镜像名
 
 ```properties
-    spring.application.name=hello
+    spring.application.name=service-hello
     server.port=2001
         
     #配置eureka服务端的访问地址
@@ -820,7 +852,7 @@ services:
     ports:
       - 2000:2000
 
-  hello:
+  service-hello:
     image: xw.cloud/service-hi
     restart: always
     ports:
@@ -856,7 +888,7 @@ services:
       - 2000:2000
 
   service-hi:
-    build: hello
+    build: service-hello
     ports:
       - 2001:2001
 ```

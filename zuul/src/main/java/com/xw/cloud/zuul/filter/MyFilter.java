@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
  * Created by 夏玮
  * 2018/3/8 14:35
  * zuul过滤器的例子
+ * 获取request中的token参数
  */
 //@Component
 public class MyFilter extends ZuulFilter {

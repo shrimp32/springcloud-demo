@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!--<parent>-->
+        <!--<artifactId>springcloud-demo-xw</artifactId>-->
+        <!--<groupId>com.xw.cloud</groupId>-->
+        <!--<version>0.0.1-SNAPSHOT</version>-->
+    <!--</parent>-->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.1.5.RELEASE</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.xw.cloud</groupId>
+    <artifactId>grpc-demo</artifactId>
+    <name>grpc-demo</name>
+    <version>0.0.2-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>grpc-demo-provider</module>
+        <module>grpc-demo-consumer</module>
+        <module>grpc-demo-lib</module>
+    </modules>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+        <spring-boot.version>${project.parent.version}</spring-boot.version>
+        <net-devh-grpc.version>2.4.0.RELEASE</net-devh-grpc.version>
+        <spring-cloud.version>Greenwich.SR1</spring-cloud.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!--公共grpc模块-->
+            <dependency>
+                <groupId>com.xw.cloud</groupId>
+                <artifactId>grpc-demo-lib</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!--核心grpc-spring-boot-client依赖-->
+            <dependency>
+                <groupId>net.devh</groupId>
+                <artifactId>grpc-client-spring-boot-starter</artifactId>
+                <version>${net-devh-grpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.devh</groupId>
+                <artifactId>grpc-server-spring-boot-starter</artifactId>
+                <version>${net-devh-grpc.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>

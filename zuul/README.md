@@ -13,7 +13,11 @@ Hello, hello! port: 2002
 ```
 
 ## 过滤
-
+- pre类型过滤器 PreDecorationFilter
+- route类型过滤器 SendForwardFilter、RibbonRoutingFilter、SimpleHostRoutingFilter
+- post类型过滤器 SendResponseFilter
+- error类型过滤器 SendErrorFilter
+- 自定义Zuul过滤器 MyFilter.java
 
 ## 统一异常处理
 - Zuul异常处理就是由SendErrorFilter完成
@@ -21,7 +25,7 @@ Hello, hello! port: 2002
 
 >注意，对于代理的应用里的异常并不能统一处理
 
-## zuul的熔断回退
+## zuul的熔断回退ServiceFallbackProvider.java
 - Dalston及更低版本通过实现ZuulFallbackProvider 接口，从而实现回退；
 - Edgware及更高版本通过实现FallbackProvider 接口，从而实现回退。
 - 在Edgware中：
@@ -39,12 +43,22 @@ Hello, hello! port: 2002
 
 ## 限流
 策略：
-- 用户限流
+- user限流
 - IP限流
-- 接口限流
+- url限流
 
 ### 基于过滤器和ratelimit的限流，参见RateLimitZuulFilter
+RateLimiter是Google开源的实现了令牌桶算法的限流工具（速率限制器）。http://ifeve.com/guava-ratelimiter/
+
 ### 基于spring-cloud-zuul-ratelimit的限流
+Spring Cloud Zuul RateLimiter结合Zuul对RateLimiter进行了封装，通过实现ZuulFilter提供了服务限流功能
+
+限流粒度/类型:
+- Authenticated User	针对请求的用户进行限流
+- Request Origin	针对请求的Origin进行限流
+- URL	针对URL/接口进行限流
+- Service	针对服务进行限流，如果没有配置限流类型，则此类型生效
+
 需要在pom文件中引入spring-cloud-zuul-ratelimit依赖
 
 ```yaml
@@ -94,4 +108,37 @@ zuul:
 
                           - url
 
-``` 
+```
+
+### 基于系统负载的动态限流
+
+# Zuul 2核心特性
+
+- 服务器协议
+
+	- HTTP/2——完整的入站（inbound）HTTP/2 连接服务器支持
+	- 双向 TLS（Mutual TLS）——支持在更安全的场景下运行 Zuul
+
+- 弹性特性
+
+自适应重试——Netflix 用于增强弹性和可用性的核心重试逻辑
+
+源并发保护——可配置的并发限制，避免源过载，隔离 Zuul 背后的各个源
+
+- 运营特性
+
+请求 Passport——跟踪每个请求的所有生命周期事件，这对调试异步请求非常有用
+
+状态分类——请求成功和失败的可能状态枚举，比 HTTP 状态码更精细
+
+请求尝试——跟踪每个代理的尝试和状态，对调试重试和路由特别有用
+
+- 一些即将推出的功能，包括：
+
+Websocket/SSE——支持通道推送通知
+
+限流和限速——防止恶意客户端连接和请求，帮助抵御大规模攻击
+
+掉电过滤器——Zuul 过载时禁用一些 CPU 密集型特性
+
+可配置路由——基于文件的路由配置，而不需要在 Zuul 中创建路由过滤器

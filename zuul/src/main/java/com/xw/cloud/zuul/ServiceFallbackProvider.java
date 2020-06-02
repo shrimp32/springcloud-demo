@@ -1,6 +1,10 @@
 package com.xw.cloud.zuul;
 
-import com.netflix.hystrix.exception.HystrixTimeoutException;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+
 import org.springframework.cloud.netflix.zuul.filters.route.FallbackProvider;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -8,33 +12,31 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
+import com.netflix.hystrix.exception.HystrixTimeoutException;
 
 /**
  * @author : 夏玮
  * Created on 2018/9/18 15:43
- * zuul的熔断处理,E版本有所不同
+ * zuul的熔断回退
  */
 @Component
 public class ServiceFallbackProvider implements FallbackProvider {
     @Override
     public String getRoute() {
+    	// 表明是为哪个微服务提供回退，*表示为所有微服务提供回退
         return "*";
     }
 
     @Override
-    public ClientHttpResponse fallbackResponse(Throwable cause) {
+    public ClientHttpResponse fallbackResponse(String route,Throwable cause) {
         if (cause instanceof HystrixTimeoutException) {
             return response(HttpStatus.GATEWAY_TIMEOUT);
         } else {
-            return this.fallbackResponse();
+            return this.fallbackResponse(route, cause);
         }
     }
 
-    @Override
+
     public ClientHttpResponse fallbackResponse() {
         return this.response(HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -75,5 +77,6 @@ public class ServiceFallbackProvider implements FallbackProvider {
             }
         };
     }
+
 
 }
